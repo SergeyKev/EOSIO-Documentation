@@ -63,17 +63,21 @@ Bandwidth Resource Pool to the total number of EOS.IO tokens _staked into the Ba
 Alice has staked 10 EOS and there are a total of 100 EOS tokens staked in the Bandwitdth Resource Pool, she may consume
 up to 10% of the available Bandwidth resources.
 
-A user's maximum Bandwidth is unbounded, in times of abundance user's should be able to use the full capacity of the
-blockchain to process their transactions.
+A user's maximum Bandwidth is a multiple of this minimum Bandwidth as voted on by the Producers.  In times of abundance
+a user with a modest stake should be able to consume Bandwidth at a rate well in excess of their minimum.
 
 In a perfect world the producers would have all the information the need to enforce this.  Practically, at the time a
 Producer must decide to schedule a transaction it cannot know the transactions that will arrive in the future but within
 the time span of the current block.
 
 As such, Producers calculate a virtual Bandwidth which over-subscribes the actual capacity of the blockchain by a factor
-with a minimum bound of 1 and no maximum bound.  For every block produced while the blockchain is considered to be
-over the ideal Bandwidth usage, this factor is reduced by 1%.  For every block produced while the blockchain is
-considered to be under the ideal Bandwidth usage, this factor is increased by 0.1%.
+with a minimum bound of 1 and the the per-user maximum multiple.  For every block produced while the average usage
+is greater than the ideal target usage, this factor is reduced by 1%.  For every block produced while the average usage
+is less the ideal target usage, this factor is increased by 0.1%.
+
+The ideal target usage is set such that there is a burstable capacity of 10 times the ideal target before the hard
+limits voted on by Producers are breached.  This ideal target is the sustainable Brandwidth rate for the existing
+blockchain.
 
 This creates an elastic supply of virtual Bandwidth that approaches a strict stake-based allocation under congested
 conditions and relaxes to an unbounded first-come-first-serve allocation when the blockchain is idle.
@@ -81,21 +85,24 @@ conditions and relaxes to an unbounded first-come-first-serve allocation when th
 Whether a blockchain is over or under the ideal Bandwith usage is determined using an ideal target usage which is voted
 on by the producers.
 
-#### Charging
-
-In order to prevent abuses where a user stakes EOS, uses some incidental resources, un-stakes EOS and gives it to
-another user to "double dip" on incidental resources.  The allocation of Bandwith "charges" over time and "discharges"
-on use.  Practically speaking, this means that Bandwidth is not immediately available when it is staked.  A users stake
-represents their capacity for Bandwidth that will fill over time with _actual usable_ Bandwidth that is consumed when
-transactions are processed.  Burst capacity is available through Bandwidth Delegation described below.
-
 #### Delegation
 
-Any user may delegate some of their Bandwidth resources to another user.  When this is done, it can be done "charged" or
-"uncharged".  Uncharged delegation is exactly equivalent to the receiving user having staked EOS tokens themselves, with
-the exception that the user who delegates the Bandwidth may revoke it at any time.  Delegating "charged" Bandwidth
-allows the receiving user to instantly consume the Bandwidth.  Regardless of how it was delegated, when the delegation
-is revoked, it is returned with whatever level of charge it possesses at the time of revocation.
+Any user may stake tokens into the Bandwidth resource pool of any user, including their own.  This Bandwidth may be
+instantly used by the owner of the Bandwidth resource pool that received the stake and may only be unstaked by the
+user who supplied the tokens.  Therefore, the staking user retains ownership of the tokens.
+
+#### Locking
+
+In order to prevent abuses where a user stakes EOS, uses some incidental resources, un-stakes EOS and gives it to
+another user to "double dip" on incidental resources.  The allocation of Bandwidth is effectively held in escrow by the
+chain for a period of time after it is un-staked from the Bandwidth resource pool.  This locking period is voted on by
+Producers and defaults to 3 days.
+
+A user may only have 1 outstanding escrow per-staked Bandwidth resource pool.  If a user attempts to unstake token
+while a pending escrow is underway, that escrow is cancelled and the combined value of the escrow and the newly unstaked
+tokens is added to a new escrow which has a fresh locking period.  For example, if 2 days ago a user unstaked 10 tokens
+and today they issue an action to unstake 5 more tokens, they will effectively receive 15 tokens in 3 days.
+
 
 ### Analysis/Use Cases
 
@@ -113,9 +120,9 @@ the short term would be sustaining significant economic damage to that stake in 
 #### A Market for Burst Capacity
 
 When a user with a low average consumption finds themselves in need of a large amount of Bandwidth for a short period of
-time, their best option will be to find a user who has speculated on Bandwidth and purchase a short-term "charged"
-delegation from them.  On-chain contracts can guarantee this transaction is trustless.  The seller will have excess
-and charged capacity and the buyer would receive instant capacity upon purchase.
+time, their best option may be to find a user who is willing to stake tokens into their pool for a modest fee that
+covers the "cost" of carrying temporarily locked tokns.  On-chain contracts can guarantee this transaction is trustless
+and the market decentralized.
 
 Another way to look at this is not a large amount of Bandwidth but a greater guarantee of instant inclusion in the chain
 such as an urgent message.
@@ -123,14 +130,15 @@ such as an urgent message.
 This adds an ability to EOS.IO equivalent to a fee-market's ability to service extremely important message given a cost.
 The primary difference between this ability and other fee-market blockchains, is that the benefactor of the fee is a
 stakeholder who's incentive is increasing the blockchains value and not a miner/custodian whos incentive is to extract
-value from the blockchain.
+value from the blockchain.  Additionally, it does not do so at the expense of other users who still retain their
+guaranteed minimum Bandwidth.
 
 #### Distributed Apps with Free Tiers
 
-A DApp that has a large amount of staked Bandwidth can delegate it as it sees fit.  In some cases, it will delegate this
-excess capacity to some of the users of the DApp as part of a free tier of service.  Unlike fee-market blockchains, where
-a DApp would have to pay and thereby co-sign transactions for an equivalent service, EOS.IO's delegation feature allows
-allows free-tier users of a DApp to transact efficiently and in parallel.
+A DApp can use funds from its own account to stake Bandwidth on its users accounts as part of a free tier of service.
+Unlike fee-market blockchains, where a DApp would have to pay fees directly and thereby co-sign transactions for an
+equivalent tier of service service, EOS.IO's mechanics allows free-tier users of a DApp to transact efficiently and in
+parallel.  At no time, is the DApp at risk of user's absconding with the funds that back this free tier of usage.
 
 ## The Data Resource
 
